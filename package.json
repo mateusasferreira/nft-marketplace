@@ -6,15 +6,32 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prettier": "npx prettier --write 'contracts/**/*.sol'" 
   },
   "dependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@openzeppelin/contracts": "^4.3.2",
+    "axios": "^0.22.0",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.4.7",
+    "hardhat": "^2.6.5",
+    "ipfs-http-client": "50.1.2",
     "next": "11.1.2",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "web3modal": "^1.9.4"
   },
   "devDependencies": {
+    "autoprefixer": "^10.3.7",
     "eslint": "7.32.0",
-    "eslint-config-next": "11.1.2"
+    "eslint-config-next": "11.1.2",
+    "install": "^0.13.0",
+    "npm": "^7.24.2",
+    "postcss": "^8.3.9",
+    "prettier-plugin-solidity": "^1.0.0-beta.18",
+    "tailwindcss": "^2.2.16"
   }
 }
