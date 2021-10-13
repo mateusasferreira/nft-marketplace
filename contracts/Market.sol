@@ -47,6 +47,13 @@ contract Market is ReentrancyGuard {
     );
 
     //mateus
+
+    event ProductUpdated(
+      uint256 indexed itemId,
+      uint256 indexed oldPrice,
+      uint256 indexed newPrice
+    );
+
     event MarketItemDeleted(uint256 itemId);
 
     event ProductSold(
@@ -72,9 +79,13 @@ contract Market is ReentrancyGuard {
     modifier onlyProductSeller(uint256 id) {
         require(
             idToMarketItem[id].owner == address(0) &&
-                idToMarketItem[id].seller == msg.sender
+                idToMarketItem[id].seller == msg.sender, "Only the product can do this operation"
         );
         _;
+    }
+
+    function getListingPrice() public view returns (uint256) {
+      return listingPrice;
     }
 
     //mateus
@@ -123,11 +134,15 @@ contract Market is ReentrancyGuard {
         emit MarketItemDeleted(itemId);
     }
 
-    function updateMarketItemPrice(uint256 itemId, uint256 newPrice)
-        public
-        onlyProductSeller(itemId)
+    function updateMarketItemPrice(uint256 id, uint256 newPrice)
+        public 
+        onlyProductSeller(id)
     {
-        idToMarketItem[itemId].price = newPrice;
+        MarketItem storage item = idToMarketItem[id];
+        uint256 oldPrice = item.price;
+        item.price = newPrice;
+
+        emit ProductUpdated(id, oldPrice, newPrice);
     }
 
     // mateus
@@ -193,6 +208,10 @@ contract Market is ReentrancyGuard {
     // valueToSeller
     //);
     // }
+
+    function fetchSingleItem(uint id) public view returns (MarketItem memory) {
+      return idToMarketItem[id];
+    }
 
     function fetchMarketItems() public view returns (MarketItem[] memory) {
         uint256 itemCount = _itemsIds.current();
