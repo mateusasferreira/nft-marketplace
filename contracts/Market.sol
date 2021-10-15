@@ -9,6 +9,7 @@ contract Market is ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _itemsIds;
     Counters.Counter private _itemsSold;
+    Counters.Counter private _itemsDeleted;
 
     // owner of the marketplace
     address payable owner;
@@ -29,6 +30,7 @@ contract Market is ReentrancyGuard {
         uint256 itemId;
         address nftContract;
         uint256 tokenId;
+        address payable creator;
         address payable seller;
         address payable owner;
         uint256 price;
@@ -41,6 +43,7 @@ contract Market is ReentrancyGuard {
         uint256 indexed itemId,
         address indexed nftContract,
         uint256 indexed tokenId,
+        address creator,
         address seller,
         address owner,
         uint256 price
@@ -60,6 +63,7 @@ contract Market is ReentrancyGuard {
         uint256 indexed itemId,
         address indexed nftContract,
         uint256 indexed tokenId,
+        address creator,
         address seller,
         address owner,
         uint256 price
@@ -107,6 +111,7 @@ contract Market is ReentrancyGuard {
             nftContract,
             tokenId,
             payable(msg.sender),
+            payable(msg.sender),
             payable(address(0)),
             price,
             false
@@ -119,6 +124,7 @@ contract Market is ReentrancyGuard {
             nftContract,
             tokenId,
             msg.sender,
+            msg.sender,
             address(0),
             price
         );
@@ -127,15 +133,18 @@ contract Market is ReentrancyGuard {
     // mateus
     function deleteMarketItem(uint256 itemId)
         public
+        payable
         onlyProductOrMarketPlaceOwner(itemId)
     {
         delete idToMarketItem[itemId];
+        _itemsDeleted.increment();
 
         emit MarketItemDeleted(itemId);
     }
 
     function updateMarketItemPrice(uint256 id, uint256 newPrice)
         public 
+        payable
         onlyProductSeller(id)
     {
         MarketItem storage item = idToMarketItem[id];
@@ -172,6 +181,7 @@ contract Market is ReentrancyGuard {
             idToMarketItem[itemId].itemId,
             idToMarketItem[itemId].nftContract,
             idToMarketItem[itemId].tokenId,
+            idToMarketItem[itemId].creator,
             idToMarketItem[itemId].seller,
             payable(msg.sender),
             idToMarketItem[itemId].price
@@ -209,18 +219,18 @@ contract Market is ReentrancyGuard {
     //);
     // }
 
-    function fetchSingleItem(uint id) public view returns (MarketItem memory) {
-      return idToMarketItem[id];
-    }
-
     function fetchMarketItems() public view returns (MarketItem[] memory) {
         uint256 itemCount = _itemsIds.current();
-        uint256 unsoldItemCount = _itemsIds.current() - _itemsSold.current();
+        uint256 unsoldItemCount = _itemsIds.current() - _itemsSold.current() - _itemsDeleted.current();
         uint256 currentIndex = 0;
 
         MarketItem[] memory items = new MarketItem[](unsoldItemCount);
         for (uint256 i = 0; i < itemCount; i++) {
-            if (idToMarketItem[i + 1].owner == address(0)) {
+            if (
+                idToMarketItem[i + 1].owner == address(0) &&
+                idToMarketItem[i + 1].sold == false &&
+                idToMarketItem[i + 1].tokenId != 0
+            ) {
                 uint256 currentId = i + 1;
                 MarketItem storage currentItem = idToMarketItem[currentId];
                 items[currentIndex] = currentItem;
@@ -228,6 +238,14 @@ contract Market is ReentrancyGuard {
             }
         }
         return items;
+    }
+
+    function fetchSingleItem(uint256 id)
+        public
+        view
+        returns (MarketItem memory)
+    {
+        return idToMarketItem[id];
     }
 
     function fetchMyNFTs() public view returns (MarketItem[] memory) {
