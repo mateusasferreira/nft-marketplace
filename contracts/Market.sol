@@ -88,6 +88,14 @@ contract Market is ReentrancyGuard {
         _;
     }
 
+    modifier onlyItemOwner(uint256 id) {
+        require(
+            idToMarketItem[id].owner == msg.sender,
+            "Only product owner can do this operation"
+        );
+        _;
+    }
+
     function getListingPrice() public view returns (uint256) {
       return listingPrice;
     }
@@ -128,18 +136,6 @@ contract Market is ReentrancyGuard {
             address(0),
             price
         );
-    }
-
-    // mateus
-    function deleteMarketItem(uint256 itemId)
-        public
-        payable
-        onlyProductOrMarketPlaceOwner(itemId)
-    {
-        delete idToMarketItem[itemId];
-        _itemsDeleted.increment();
-
-        emit MarketItemDeleted(itemId);
     }
 
     function updateMarketItemPrice(uint256 id, uint256 newPrice)
@@ -188,36 +184,35 @@ contract Market is ReentrancyGuard {
         );
     }
 
-    //another possible options; fee is paid to the marketplace owner on the items sale;
+    function putItemToResell(uint256 itemId, uint256 newPrice)
+        public
+        payable
+        nonReentrant
+        onlyItemOwner(itemId)
+    {
+        require(newPrice > 0, "Price must be at least 1 wei");
+        require(
+            msg.value == listingPrice,
+            "Price must be equal to listing price"
+        );
+        address payable oldOwner = idToMarketItem[itemId].owner;
+        idToMarketItem[itemId].owner = payable(address(0));
+        idToMarketItem[itemId].seller = oldOwner;
+        idToMarketItem[itemId].price = newPrice;
+        idToMarketItem[itemId].sold = false;
+        _itemsSold.decrement();
+    }
 
-    // function createMarketSale(
-    //   address nftContract,
-    //   uint256 itemId
-    //   ) public payable nonReentrant {
-    //   uint price = idToMarketItem[itemId].price;
-    //   uint tokenId = idToMarketItem[itemId].tokenId;
-    //   require(msg.value == price + listingPrice, "Please submit the asking price in order to complete the purchase");
+    function deleteMarketItem(uint256 itemId)
+        public
+        payable
+        onlyProductOrMarketPlaceOwner(itemId)
+    {
+        delete idToMarketItem[itemId];
+        _itemsDeleted.increment();
 
-    //   uint256 valueToSeller = msg.value - listingPrice;
-
-    //   idToMarketItem[itemId].seller.transfer(valueToSeller);
-    //   IERC721(nftContract).transferFrom(address(this), msg.sender, tokenId);
-    //   idToMarketItem[itemId].owner = payable(msg.sender);
-    //   idToMarketItem[itemId].sold = true;
-    //   _itemsSold.increment();
-
-    //   //regards the marketplace with the listingPrice
-    //   payable(owner).transfer(listingPrice);
-
-    // emit ProductSold(
-    // idToMarketItem[itemId].itemId,
-    // idToMarketItem[itemId].nftContract,
-    // idToMarketItem[itemId].tokenId,
-    // idToMarketItem[itemId].seller,
-    // payable(msg.sender),
-    // valueToSeller
-    //);
-    // }
+        emit MarketItemDeleted(itemId);
+    }
 
     function fetchMarketItems() public view returns (MarketItem[] memory) {
         uint256 itemCount = _itemsIds.current();
