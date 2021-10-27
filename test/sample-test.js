@@ -2,8 +2,9 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 let market;
-let nft
-let nftAddress
+let nft;
+let nftAddress;
+
 beforeEach(async ()=>{
   const Market = await ethers.getContractFactory("Market");
     market = await Market.deploy();
