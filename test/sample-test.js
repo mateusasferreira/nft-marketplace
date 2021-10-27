@@ -1,30 +1,30 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("MarketPlace", () => {
-  it("Should deploy marketplace and NFT contracts", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
+let market;
+let nft
+let nftAddress
+beforeEach(async ()=>{
+  const Market = await ethers.getContractFactory("Market");
+    market = await Market.deploy();
     await market.deployed();
 
     marketAddress = market.address;
 
     const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
+    nft = await NFT.deploy(marketAddress);
     await nft.deployed();
+    nftAddress = nft.address;
+})
 
+describe("MarketPlace", () => {
+  it("Should deploy marketplace and NFT contracts", async () => {
     nftMarketAddress = await nft.getContractAddress();
 
     expect(nftMarketAddress).to.equal(marketAddress)
   });
 
   it("Should have a listing price", async () => {
-    
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    
     const listingPrice = await market.getListingPrice();
     
     const expectedListingPrice = ethers.utils.parseEther('0.001')
@@ -34,18 +34,6 @@ describe("MarketPlace", () => {
   });
 
   it("Should create market item", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    nftAddress = nft.address;
-
     await nft.createToken("www.mytoken.com")
 
     const listingPrice = await market.getListingPrice();
@@ -60,18 +48,6 @@ describe("MarketPlace", () => {
   });
 
   it("Should create market sale", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    nftAddress = nft.address;
-
     const [marketPlaceOwner, sellerAddress, buyerAddress] = await ethers.getSigners();
     
     await nft.connect(sellerAddress).createToken("www.mytoken.com")
@@ -90,18 +66,6 @@ describe("MarketPlace", () => {
   });
 
   it("Should update market item price", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    nftAddress = nft.address;
-
     await nft.createToken("www.mytoken.com")
 
     const listingPrice = await market.getListingPrice();
@@ -120,18 +84,6 @@ describe("MarketPlace", () => {
   });
 
   it("should not update price if requester is not seller", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    nftAddress = nft.address;
-
     const [marketplaceOwner, sellerAddress, nonAuthorizedPerson] = await ethers.getSigners();
     
     await nft.connect(sellerAddress).createToken("www.mytoken.com")
@@ -148,19 +100,7 @@ describe("MarketPlace", () => {
   })
 
   it("should allow buyer to resell an owned item", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    nftAddress = nft.address;
-
-    const [marketplaceOwner, creator, buyer] = await ethers.getSigners();
+    const [, creator, buyer] = await ethers.getSigners();
 
     await nft.connect(creator).createToken("www.mytoken.com")
 
@@ -183,19 +123,8 @@ describe("MarketPlace", () => {
 
   
   it("Should allow seller to delete market item ", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
 
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    nftAddress = nft.address;
-
-    const [marketplaceOwner, seller] = await ethers.getSigners();
+    const [, seller] = await ethers.getSigners();
 
     await nft.connect(seller).createToken("www.mytoken.com")
 
@@ -213,18 +142,6 @@ describe("MarketPlace", () => {
   });
 
   it("Should allow marketplace owner to delete market item ", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    nftAddress = nft.address;
-
     const [marketplaceOwner, seller] = await ethers.getSigners();
 
     await nft.connect(seller).createToken("www.mytoken.com")
@@ -243,17 +160,7 @@ describe("MarketPlace", () => {
   });
 
   it("should allow buyer to delete item", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    const [marketplaceOwner, seller, buyer] = await ethers.getSigners();
+    const [, seller, buyer] = await ethers.getSigners();
 
     nftAddress = nft.address;
 
@@ -273,17 +180,7 @@ describe("MarketPlace", () => {
   })
 
   it("should not delete item is requester is not seller or marketplace", async () => {
-    const Market = await ethers.getContractFactory("Market");
-    const market = await Market.deploy();
-    await market.deployed();
-
-    marketAddress = market.address;
-
-    const NFT = await ethers.getContractFactory("NFT");
-    const nft = await NFT.deploy(marketAddress);
-    await nft.deployed();
-
-    const [marketplaceOwner, seller, nonAuthorizedPerson] = await ethers.getSigners();
+    const [, seller, nonAuthorizedPerson] = await ethers.getSigners();
 
     nftAddress = nft.address;
 
