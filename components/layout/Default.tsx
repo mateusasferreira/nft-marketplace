@@ -1,6 +1,5 @@
 import React from 'react'
 import Navbar from './Navbar'
-import {ReactNode} from 'react'
 
 
 function Default({children}) {
