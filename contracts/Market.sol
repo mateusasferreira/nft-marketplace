@@ -1,9 +1,12 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.3;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+import "./NFT.sol";
 
 contract Market is ReentrancyGuard {
     using Counters for Counters.Counter;
@@ -67,6 +70,10 @@ contract Market is ReentrancyGuard {
         address seller,
         address owner,
         uint256 price
+    );
+
+     event ProductListed(
+        uint256 indexed itemId
     );
 
     modifier onlyProductOrMarketPlaceOwner(uint256 id) {
@@ -184,34 +191,31 @@ contract Market is ReentrancyGuard {
         );
     }
 
-    function putItemToResell(uint256 itemId, uint256 newPrice)
+    function putItemToResell(address nftContract, uint256 itemId, uint256 newPrice)
         public
         payable
         nonReentrant
         onlyItemOwner(itemId)
     {
+        uint256 tokenId = idToMarketItem[itemId].tokenId;
         require(newPrice > 0, "Price must be at least 1 wei");
         require(
             msg.value == listingPrice,
             "Price must be equal to listing price"
         );
+
+        NFT tokenContract = NFT(nftContract);
+
+        tokenContract.transferToken(msg.sender, address(this), tokenId);
+        
         address payable oldOwner = idToMarketItem[itemId].owner;
         idToMarketItem[itemId].owner = payable(address(0));
         idToMarketItem[itemId].seller = oldOwner;
         idToMarketItem[itemId].price = newPrice;
         idToMarketItem[itemId].sold = false;
         _itemsSold.decrement();
-    }
 
-    function deleteMarketItem(uint256 itemId)
-        public
-        payable
-        onlyProductOrMarketPlaceOwner(itemId)
-    {
-        delete idToMarketItem[itemId];
-        _itemsDeleted.increment();
-
-        emit MarketItemDeleted(itemId);
+        emit ProductListed(itemId);
     }
 
     function fetchMarketItems() public view returns (MarketItem[] memory) {
@@ -257,6 +261,29 @@ contract Market is ReentrancyGuard {
         MarketItem[] memory items = new MarketItem[](itemCount);
         for (uint256 i = 0; i < totalItemCount; i++) {
             if (idToMarketItem[i + 1].owner == msg.sender) {
+                uint256 currentId = i + 1;
+                MarketItem storage currentItem = idToMarketItem[currentId];
+                items[currentIndex] = currentItem;
+                currentIndex += 1;
+            }
+        }
+        return items;
+    }
+
+    function fetchAuthorsCreations(address author) public view returns (MarketItem[] memory){
+        uint256 totalItemCount = _itemsIds.current();
+        uint256 itemCount = 0;
+        uint256 currentIndex = 0;
+
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (idToMarketItem[i + 1].creator == author && !idToMarketItem[i + 1].sold) {
+                itemCount += 1;
+            }
+        }
+
+        MarketItem[] memory items = new MarketItem[](itemCount);
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (idToMarketItem[i + 1].creator == author && !idToMarketItem[i + 1].sold) {
                 uint256 currentId = i + 1;
                 MarketItem storage currentItem = idToMarketItem[currentId];
                 items[currentIndex] = currentItem;

@@ -113,85 +113,12 @@ describe("MarketPlace", () => {
 
     await market.connect(buyer).createMarketSale(nftAddress, 1, {value: 100})
     
-    await market.connect(buyer).putItemToResell(1, 150, {value: listingPrice})
+    await market.connect(buyer).putItemToResell(nftAddress, 1, 150, {value: listingPrice})
 
     const item = await market.fetchSingleItem(1)
 
     expect(item.owner).to.equal(unsoldItem.owner);
     expect(item.seller).to.equal(buyer.address)
     expect(item.creator).to.equal(creator.address)
-  })
-
-  
-  it("Should allow seller to delete market item ", async () => {
-
-    const [, seller] = await ethers.getSigners();
-
-    await nft.connect(seller).createToken("www.mytoken.com")
-
-    const listingPrice = await market.getListingPrice();
-
-    const initialPrice = ethers.utils.parseUnits('100', 'ether')
-
-    await market.connect(seller).createMarketItem(nftAddress, 1, initialPrice, {value: listingPrice})
-
-    await market.connect(seller).deleteMarketItem(1)
-
-    const item = await market.fetchSingleItem(1)
-  
-    expect(item.tokenId).to.equal(0)
-  });
-
-  it("Should allow marketplace owner to delete market item ", async () => {
-    const [marketplaceOwner, seller] = await ethers.getSigners();
-
-    await nft.connect(seller).createToken("www.mytoken.com")
-
-    const listingPrice = await market.getListingPrice();
-
-    const initialPrice = ethers.utils.parseUnits('100', 'ether')
-
-    await market.connect(seller).createMarketItem(nftAddress, 1, initialPrice, {value: listingPrice})
-
-    await market.connect(marketplaceOwner).deleteMarketItem(1)
-
-    const item = await market.fetchSingleItem(1)
-  
-    expect(item.tokenId).to.equal(0)
-  });
-
-  it("should allow buyer to delete item", async () => {
-    const [, seller, buyer] = await ethers.getSigners();
-
-    nftAddress = nft.address;
-
-    await nft.connect(seller).createToken("www.mytoken.com")
-
-    const listingPrice = await market.getListingPrice();
-
-    await market.connect(seller).createMarketItem(nftAddress, 1, 100, {value: listingPrice})
-
-    await market.connect(buyer).createMarketSale(nftAddress, 1, {value: 100})
-
-    await market.connect(buyer).deleteMarketItem(1)
-
-    const item = await market.fetchSingleItem(1)
-    
-    expect(item.tokenId).to.equal(0)
-  })
-
-  it("should not delete item is requester is not seller or marketplace", async () => {
-    const [, seller, nonAuthorizedPerson] = await ethers.getSigners();
-
-    nftAddress = nft.address;
-
-    await nft.connect(seller).createToken("www.mytoken.com")
-
-    const listingPrice = await market.getListingPrice();
-
-    await market.connect(seller).createMarketItem(nftAddress, 1, 100, {value: listingPrice})
-
-    await expect(market.connect(nonAuthorizedPerson).deleteMarketItem(1))
-      .to.be.reverted
   })
 });

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.3;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -9,7 +10,6 @@ import "hardhat/console.sol";
 
 contract NFT is ERC721URIStorage {
     using Counters for Counters.Counter;
-
     Counters.Counter private _tokenIds;
 
     address contractAddress;
@@ -28,13 +28,13 @@ contract NFT is ERC721URIStorage {
         return newTokenId;
     }
 
+    function transferToken(address from, address to, uint256 tokenId) external {
+        require(ownerOf(tokenId) == from, "From address must be token owner");
+        _transfer(from, to, tokenId);
+    }
+
+
     function getContractAddress() public view returns (address){
       return contractAddress;
     }
-
-    // function deleteToken(uint tokenId) public {
-
-    //   _burn(tokenId);
-
-    // }
 }
